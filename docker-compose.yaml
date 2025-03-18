@@ -5,26 +5,28 @@ services:
     networks:
       - automalar-network
     environment:
-      - HOST=0.0.0.0
+      - HOST=${COGNEE_HOST}
+      - PORT=${COGNEE_PORT}
       - ENVIRONMENT=local
       - PYTHONPATH=.
       - LLM_API_KEY=${LLM_API_KEY}
       - LLM_MODEL=${LLM_MODEL}
       - LLM_PROVIDER=${LLM_PROVIDER}
-      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER}
-      - EMBEDDING_API_KEY=${EMBEDDING_API_KEY}
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
-      - EMBEDDING_DIMENSIONS=${EMBEDDING_DIMENSIONS}
-      - GRAPH_DATABASE_PROVIDER=${GRAPH_DATABASE_PROVIDER}
-      - VECTOR_DB_PROVIDER=${VECTOR_DB_PROVIDER}
-      - DB_PROVIDER=${DB_PROVIDER}
-      - DB_NAME=${DB_NAME}
+      - EMBEDDING_PROVIDER=${LLM_EMBEDDING_PROVIDER}
+      - EMBEDDING_API_KEY=${LLM_EMBEDDING_API_KEY}
+      - EMBEDDING_MODEL=${LLM_EMBEDDING_MODEL}
+      - EMBEDDING_DIMENSIONS=${LLM_EMBEDDING_DIMENSIONS}
+      - GRAPH_DATABASE_PROVIDER=${COGNEE_GRAPH_DATABASE_PROVIDER}
+      - VECTOR_DB_PROVIDER=${COGNEE_VECTOR_DB_PROVIDER}
+      - DB_PROVIDER=${COGNEE_DB_PROVIDER}
+      - DB_NAME=${COGNEE_POSTGRES_DB_NAME}
       - DB_HOST=${POSTGRES_HOST}
       - DB_PORT=${POSTGRES_PORT}
       - DB_USERNAME=${POSTGRES_USER}
       - DB_PASSWORD=${POSTGRES_PASSWORD}
     ports:
-      - 8000:8000
+      - ${COGNEE_PORT}:${COGNEE_PORT}
+      # - 5678:5678 # Debugging
     deploy:
       resources:
         limits:
@@ -33,6 +35,20 @@ services:
     depends_on:
       - postgres
       - litellm
+
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j
+    profiles:
+      - neo4j
+    ports:
+      - 7474:7474
+      - 7687:7687
+    environment:
+      - NEO4J_AUTH=neo4j/pleaseletmein
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
+    networks:
+      - cognee-network
 
   cognee-mcp:
     image: cognee/cognee-mcp
@@ -44,7 +60,7 @@ services:
       - DB_PORT=${POSTGRES_PORT}
       - DB_USERNAME=${POSTGRES_USER}
       - DB_PASSWORD=${POSTGRES_PASSWORD}
-      - DB_NAME=${DB_NAME}
+      - DB_NAME=${COGNEE_GRAPH_DB_NAME}
     depends_on:
       - postgres
 
@@ -71,11 +87,11 @@ services:
     image: ghcr.io/berriai/litellm:main
     container_name: litellm
     ports:
-      - 8080:8080
+      - ${LITELLM_PORT}:${LITELLM_PORT}
     environment:
       - PORT=${LITELLM_PORT}
       - MASTER_KEY=${LITELLM_MASTER_KEY}
-      - DATABASE_URL=${LITELLM_DATABASE_URL}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${LITELLM_DB_NAME}
       - STORE_MODEL_IN_DB=${LITELLM_STORE_MODEL_IN_DB}
       - GEMINI_API_KEY=${LLM_API_KEY}
     networks:
