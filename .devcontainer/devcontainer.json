@@ -1,0 +1,23 @@
+{
+    "name": "AutomaLar",
+    "dockerComposeFile": ["docker-compose.yml"],
+    "service": "automalar-main",
+    "workspaceFolder": "${localEnv:WORKSPACE_PATH}",
+    "remoteUser": "${localEnv:WORKSPACE_USER}",
+
+    "initializeCommand": "bash /scripts/initialize-repos.sh",
+
+    "postAttachCommand": "echo 'Attached to AutomaLar Ecosystem Management! Use tasks to manage service profiles.' && git config --global --add safe.directory /workspaces/AutomaLar",
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "ms-azuretools.vscode-docker",
+          "eamodio.gitlens",
+          "github.vscode-pull-request-github",
+          "actboy168.task",
+          "bierner.markdown-mermaid"
+        ]
+      }
+    },
+    "shutdownAction": "none"
+  }
