@@ -3,32 +3,33 @@ version: '3.8'
 
 services:
   automalar-main:
+    container_name: automalar-main
+    working_dir: ${WORKSPACE_PATH-/automalar}
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: automalar-main
     volumes:
-      - ..:/workspaces/AutomaLar:cached
+      - ..:${WORKSPACE_PATH-/automalar}:cached
       - /var/run/docker.sock:/var/run/docker.sock
-    working_dir: /workspaces/AutomaLar
     command: sleep infinity
     networks:
-      - automalar_dev_network
+      - ${PROJECT_NAME-automalar}_dev_network
 
-  automalar_web_app:
+
+  automalar-web-app:
     extends:
-      file: ../projects/automalar-web/.devcontainer/docker-compose.yml # Path to ORIGINAL
-      service: app # Service name in ORIGINAL automalar-web compose
-    container_name: automalar_integrated_web_app
+      file: ../projects/automalar-web/.devcontainer/docker-compose.yml
+      service: app
+    working_dir: ${WORKSPACE_PATH-/automalar}/automalarweb
     volumes:
-      - ../projects/automalar-web:/workspace:cached # Source code for web
-    networks:
-      - automalar_dev_network
-    ports: ["3000:3000", "6006:6006", "5555:5555"]
+      - ..:${WORKSPACE_PATH-/automalar}/automalarweb:cached
+    environment:
+      - WORKSPACE_PATH=${WORKSPACE_PATH-/automalar}/automalarweb
+    user: ${WORKSPACE_USER-node}
     depends_on:
       automalar_web_db: { condition: service_healthy }
-      automalar_web_cognee: { condition: service_started } # Or healthy if it gets a healthcheck
-    profiles: ["web", "all"] # Assign to profiles
+      automalar_web_cognee: { condition: service_started }
+    profiles: ["web", "all"]
 
   automalar_web_db:
     extends:
