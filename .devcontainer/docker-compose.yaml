@@ -19,7 +19,7 @@ services:
 
   automalar-web-app:
     extends:
-      file: ../projects/automalar-web/.devcontainer/docker-compose.yml
+      file: ../automalar-web/.devcontainer/docker-compose.yml
       service: app
     working_dir: ${WORKSPACE_PATH:-/automalar}${WEB_WORKSPACE_PATH:-/automalarweb}
     volumes:
@@ -33,13 +33,13 @@ services:
 
   automalar_web_db:
     extends:
-      file: ../projects/automalar-web/.devcontainer/docker-compose.yml
+      file: ../automalar-web/.devcontainer/docker-compose.yml
       service: db
     profiles: ["web", "web-db", "all"]
 
   automalar_web_cognee:
     extends:
-      file: ../projects/automalar-web/.devcontainer/docker-compose.yml
+      file: ../automalar-web/.devcontainer/docker-compose.yml
       service: cognee-mcp
     working_dir: ${WORKSPACE_PATH:-/automalar}${WEB_WORKSPACE_PATH:-/automalarweb}
     volumes:
