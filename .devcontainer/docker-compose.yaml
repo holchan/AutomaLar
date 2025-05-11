@@ -1,31 +1,31 @@
-name: automalar
-version: '3.8'
+name: ${PROJECT_SLUG:-automalar}
+version: "3.8"
 
 services:
   automalar-main:
-    container_name: automalar-main
-    working_dir: ${WORKSPACE_PATH-/automalar}
+    container_name: ${PROJECT_SLUG:-automalar}
+    working_dir: ${WORKSPACE_PATH:-/automalar}
     build:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ..:${WORKSPACE_PATH-/automalar}:cached
+      - ..:${WORKSPACE_PATH:-/automalar}:cached
       - /var/run/docker.sock:/var/run/docker.sock
     command: sleep infinity
     networks:
-      - ${PROJECT_NAME-automalar}_dev_network
+      - ${PROJECT_SLUG:-automalar}_dev_network
+      - ${WEB_PROJECT_SLUG:-automalar-web}_dev_network
 
 
   automalar-web-app:
     extends:
       file: ../projects/automalar-web/.devcontainer/docker-compose.yml
       service: app
-    working_dir: ${WORKSPACE_PATH-/automalar}/automalarweb
+    working_dir: ${WORKSPACE_PATH:-/automalar}${WEB_WORKSPACE_PATH:-/automalarweb}
     volumes:
-      - ..:${WORKSPACE_PATH-/automalar}/automalarweb:cached
+      - ..:${WORKSPACE_PATH:-/automalar}${WEB_WORKSPACE_PATH:-/automalarweb}:cached
     environment:
-      - WORKSPACE_PATH=${WORKSPACE_PATH-/automalar}/automalarweb
-    user: ${WORKSPACE_USER-node}
+      - WORKSPACE_PATH=${WORKSPACE_PATH:-/automalar}${WEB_WORKSPACE_PATH:-/automalarweb}
     depends_on:
       automalar_web_db: { condition: service_healthy }
       automalar_web_cognee: { condition: service_started }
@@ -35,41 +35,30 @@ services:
     extends:
       file: ../projects/automalar-web/.devcontainer/docker-compose.yml
       service: db
-    container_name: automalar_integrated_postgres
-    networks: ["automalar_dev_network"]
-    ports: ["5432:5432"]
     profiles: ["web", "web-db", "all"]
 
   automalar_web_cognee:
     extends:
       file: ../projects/automalar-web/.devcontainer/docker-compose.yml
       service: cognee-mcp
-    container_name: automalar_integrated_cognee_mcp
-    volumes: ["../projects/automalar-web:/workspace:cached"]
-    networks: ["automalar_dev_network"]
-    ports: ["8000:8000"]
+    working_dir: ${WORKSPACE_PATH:-/automalar}${WEB_WORKSPACE_PATH:-/automalarweb}
+    volumes:
+      - ..:${WORKSPACE_PATH:-/automalar}${WEB_WORKSPACE_PATH:-/automalarweb}:cached
+    environment:
+      - WORKSPACE_PATH=${WORKSPACE_PATH:-/automalar}${WEB_WORKSPACE_PATH:-/automalarweb}
     profiles: ["web", "web-cognee", "all"]
 
-  # --- AutomaLarCORE Services (Example) ---
-  # automalar_core_app:
-  #   extends:
-  #     file: ../projects/automalar-core/.devcontainer/docker-compose.yml
-  #     service: app # Assuming 'app' is the service name in core's compose
-  #   container_name: automalar_integrated_core_app
-  #   volumes: ["../projects/automalar-core:/workspace:cached"]
-  #   networks: ["automalar_dev_network"]
-  #   ports: ["8081:8080"] # Example
-  #   profiles: ["core", "all"]
-
 networks:
-  automalar_dev_network:
-    name: automalar_dev_network # Ensure consistent network name
+  dev_network:
+    name: ${PROJECT_SLUG:-automalar}_dev_network
+    driver: bridge
+  web_dev_network:
+    name: ${PROJECT_SLUG:-automalar-web}_dev_network
     driver: bridge
 
-volumes: # Declare all named volumes from sub-projects to associate them with this project
+volumes:
   node_modules_devcontainer:
   next_cache_devcontainer:
   storybook_cache_devcontainer:
   postgres_data_devcontainer:
   zsh_history_devcontainer:
-  # Add other named volumes from other projects here
